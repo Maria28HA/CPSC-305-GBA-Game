@@ -1,15 +1,15 @@
 # CPSC-305-GBA-Game
 
 #TODO 
-brackground - 
+background - 
 
 sprites - 
 Assembly code
     Goomba movement
-        peach looses lives
+        peach looses live
     Score
 main.c
-    Pincess Peach
+    Princess Peach
         movement
         coins
         Yoshi Following
