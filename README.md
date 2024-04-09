@@ -12,6 +12,6 @@ main.c
     Princess Peach
         movement
         coins
-        Yoshi Following
+        Yoshi Following (Bonus)
         win animation
         
