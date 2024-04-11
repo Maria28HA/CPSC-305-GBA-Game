@@ -8,6 +8,7 @@
 
 /* include the tile map we are using */
 #include "background.h"
+#include "blocks.h"
 
 /* the width and height of the screen */
 #define WIDTH 240
@@ -123,18 +124,32 @@ void setup_background() {
     }
 
     /* set all control the bits in this register */
-    *bg0_control = 0 |    /* priority, 0 is highest, 3 is lowest */
+    *bg0_control = 3 |    /* priority, 0 is highest, 3 is lowest */
         (0 << 2)  |       /* the char block the image data is stored in */
         (0 << 6)  |       /* the mosaic flag */
         (1 << 7)  |       /* color mode, 0 is 16 colors, 1 is 256 colors */
         (16 << 8) |       /* the screen block the tile data is stored in */
         (1 << 13) |       /* wrapping flag */
-        (0 << 14);        /* bg size, 0 is 256x256 */
+        (3 << 14);        /* bg size, 0 is 256x256 */
+
+    *bg1_control = 2 |    /* priority, 0 is highest, 3 is lowest */
+        (0 << 2)  |       /* the char block the image data is stored in */
+        (0 << 6)  |       /* the mosaic flag */
+        (1 << 7)  |       /* color mode, 0 is 16 colors, 1 is 256 colors */
+        (24 << 8) |       /* the screen block the tile data is stored in */
+        (1 << 13) |       /* wrapping flag */
+        (3 << 14);        /* bg size, 0 is 256x256 */
+
 
     /* load the tile data into screen block 16 */
     dest = screen_block(16);
     for (int i = 0; i < (background_width * background_height); i++) {
         dest[i] = background[i];
+    }
+    
+    dest = screen_block(24);
+    for (int i = 0; i < (blocks_width * blocks_height); i++){
+        dest[i] = blocks[i];
     }
 }
 
@@ -147,7 +162,7 @@ void delay(unsigned int amount) {
 /* the main function */
 int main() {
     /* we set the mode to mode 0 with bg0 on */
-    *display_control = MODE0 | BG0_ENABLE;
+    *display_control = MODE0 | BG0_ENABLE | BG1_ENABLE;
 
     /* setup the background 0 */
     setup_background();
@@ -155,29 +170,39 @@ int main() {
     /* set initial scroll to 0 */
     int xscroll = 0;
     int yscroll = 0;
+    int frontx = 0;
+    int fronty = 0;
 
     /* loop forever */
     while (1) {
         /* scroll with the arrow keys */
         if (button_pressed(BUTTON_DOWN)) {
             yscroll++;
+            fronty++;
+            fronty++;
         }
         if (button_pressed(BUTTON_UP)) {
             yscroll--;
-
+            fronty--;
+            fronty--;
         }
         if (button_pressed(BUTTON_RIGHT)) {
             xscroll++;
+            frontx++;
+            frontx++;
         }
         if (button_pressed(BUTTON_LEFT)) {
             xscroll--;
+            frontx--;
+            frontx--;
         }
 
         /* wait for vblank before scrolling */
         wait_vblank();
         *bg0_x_scroll = xscroll;
         *bg0_y_scroll = yscroll;
-
+        *bg1_x_scroll = xscroll;
+        *bg1_y_scroll = yscroll;
         /* delay some */
         delay(50);
     }
