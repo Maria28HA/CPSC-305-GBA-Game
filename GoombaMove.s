@@ -1,38 +1,38 @@
 @Goomba Movement
 
 /* function that makes the Goomba move left and right */
-goomba:
-   @ Need to import the binary data of the Goomba sprite
+.global GoombaMove
+.equ SCREEN_WIDTH, 240
 
-goomba_x:
-   @ Variable to store goomba's x-coordinate
-goomba_direction:
-   @ Variable to store goomba's direction (1 for right, 0 for left)
+GoombaMove:
+    stmfd sp!, {r4-r7, lr}  @ Save registers
 
-.global main
+    @ Load parameters
+    ldr r4, [r0]      @ Load x-coordinate of Goomba
+    ldr r5, [r1]      @ Load direction of Goomba
 
-main:
-  @ Setup
-  mov r0, #100        @ Initial x-coordinate of the sprite
-  mov r1, #100        @ Initial y-coordinate of the sprite
-  mov r2, #1          @ Movement direction (1 for right, -1 for left)
-  mov r3, #1          @ Speed of movement
+    @ Adjust x-coordinate based on direction
+    add r4, r4, r5    @ Increment/decrement x-coordinate based on direction
 
-loop:
-  @ Move the goomba
-  add r0, r0, r2, LSL #3    @ Adjust x-coordinate based on direction and speed (assuming 8x8 sprite)
-  
-  @ Check boundaries
-  cmp r0, #20        @ Right boundary
-  bge change_direction
-  
-  cmp r0, #20         @ Left boundary
-  ble change_direction
+    @ Check boundaries
+    cmp r4, #0        @ Check if x-coordinate is less than or equal to 0 (left boundary)
+    blt change_direction_left
+
+    ldr r6, =SCREEN_WIDTH    @ Load SCREEN_WIDTH into register r6
+    sub r6, r6, #32          @ Subtract 32 from SCREEN_WIDTH
+    cmp r4, r6               @ Compare x-coordinate with SCREEN_WIDTH - 32
 
 continue:
-  b loop
+    @ Update Goomba's x-coordinate
+    str r4, [r0]
 
-change_direction:
-  neg r2, r2          @ Change direction
-  b continue
+    ldmfd sp!, {r4-r7, pc}  @ Restore registers and return
+
+change_direction_left:
+    mov r5, #1        @ Change direction to right
+    b continue
+
+change_direction_right:
+    mov r5, #-1       @ Change direction to left
+    b continue
 

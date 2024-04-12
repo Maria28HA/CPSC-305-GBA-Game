@@ -544,6 +544,38 @@ void peach_update(struct Peach* peach, int xscroll) {
     sprite_position(peach->sprite, peach->x, peach->y);
 }
 
+/* Structure for the Goomba sprite */
+struct Goomba {
+    struct Sprite* sprite;
+    int x, y;
+    int direction; // -1 for left, 1 for right
+};
+
+/* Initialize the Goomba */
+void Goomba_init(struct Goomba* goomba) {
+    goomba->x = 50; // Initial x-coordinate
+    goomba->y = 100; // Initial y-coordinate
+    goomba->direction = 1; // Initial direction (right)
+    goomba->sprite = sprite_init(goomba->x, goomba->y, SIZE_32_32, 0, 0, 0, 2); // Create the sprite
+}
+
+/* Update the Goomba's position and direction */
+void Goomba_update(struct Goomba* goomba) {
+    // Move the Goomba
+    goomba->x += goomba->direction; // Update x-coordinate based on direction
+
+    // Check boundaries (adjust as needed)
+    if (goomba->x <= 0 || goomba->x >= SCREEN_WIDTH - 32) {
+        goomba->direction *= -1; // Reverse direction if Goomba reaches screen edges
+    }
+
+    // Update Goomba sprite position
+    sprite_position(goomba->sprite, goomba->x, goomba->y);
+}
+
+/* Call assembly function to keep the Goomba moving left and right */
+void GoombaMove(int x, int direction); // Assembly function declaration
+
 /* the main function */
 int main() {
     /* we set the mode to mode 0 with bg0 on */
@@ -562,7 +594,10 @@ int main() {
     struct Peach peach;
     Peach_init(&peach);
 
-    /* set initial scroll to 0 */
+   /* create the Goomba */
+    struct Goomba goomba;
+   
+   /* set initial scroll to 0 */
     int xscroll = 0;
 
     /* loop forever */
@@ -596,6 +631,13 @@ int main() {
 
         /* delay some */
         delay(300);
-    }
+
+       /* update the Goomba */
+        Goomba_update(&goomba);
+
+        /* call assembly function to handle Goomba movement */
+        GoombaMove(goomba.x, goomba.direction);
+
+   }
 }
 
