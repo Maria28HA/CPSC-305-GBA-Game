@@ -510,7 +510,7 @@ void peach_update(struct Peach* peach, int xscroll) {
 
     /* if it's block tile
      * these numbers refer to the tile indices of the blocks the peach can walk on */
-    if ((tile >= 73 && tile <= 82) || (tile >= 97 && tile <= 100) || (tile >= 179 && tile <= 180) /*|| (tile >= 203 && tile <= 204) || (tile >= 85 && tile <= 92)*/) {
+    if ((tile >= 72 && tile <= 82) || (tile >= 97 && tile <= 100) || (tile >= 179 && tile <= 180) /*|| (tile >= 203 && tile <= 204) || (tile >= 85 && tile <= 92)*/) {
         /* stop the fall! */
         peach->falling = 0;
         peach->yvel = 0;
