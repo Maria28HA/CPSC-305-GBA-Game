@@ -596,7 +596,8 @@ int main() {
 
    /* create the Goomba */
     struct Goomba goomba;
-   
+    Goomba_init(&goomba);
+
    /* set initial scroll to 0 */
     int xscroll = 0;
 
