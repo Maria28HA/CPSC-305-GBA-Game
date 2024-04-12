@@ -556,7 +556,7 @@ void Goomba_init(struct Goomba* goomba) {
     goomba->x = 50; // Initial x-coordinate
     goomba->y = 100; // Initial y-coordinate
     goomba->direction = 1; // Initial direction (right)
-    goomba->sprite = sprite_init(goomba->x, goomba->y, SIZE_32_32, 0, 0, 0, 2); // Create the sprite
+    goomba->sprite = sprite_init(goomba->x, goomba->y, SIZE_32_32, 0, 0, 736, 2); // Create the sprite
 }
 
 /* Update the Goomba's position and direction */
@@ -637,7 +637,7 @@ int main() {
         Goomba_update(&goomba);
 
         /* call assembly function to handle Goomba movement */
-        GoombaMove(goomba.x, goomba.direction);
+//        GoombaMove(goomba.x, goomba.direction);
 
    }
 }
