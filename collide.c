@@ -363,6 +363,9 @@ struct Peach {
     /* which frame of the animation he is on */
     int frame;
 
+    /* which animation she should stop on */
+    int stopVal;
+
     /* the number of frames to wait before flipping */
     int animation_delay;
 
@@ -377,6 +380,9 @@ struct Peach {
 
     /* if the peach is currently falling */
     int falling;
+
+    /* if the game has been won*/
+    int won;
 };
 
 /* initialize the peach */
@@ -387,50 +393,104 @@ void Peach_init(struct Peach* peach) {
     peach->gravity = 50;
     peach->border = 40;
     peach->frame = 0;
+    peach->stopVal = 0;
     peach->move = 0;
     peach->counter = 0;
     peach->falling = 0;
+    peach->won = 0;
     peach->animation_delay = 8;
     peach->sprite = sprite_init(peach->x, peach->y, SIZE_32_64, 0, 0, peach->frame, 2);
 }
 
+/* Structure for the Yoshi sprite*/
+struct Yoshi{
+    struct Sprite* sprite;
+    int x, y;
+    int yvel;
+    int gravity;
+    int falling;
+    int frame;
+    int animation_delay;
+    int counter;
+    int move;
+    int border;
+};
+
+/*Initialize Yoshi*/
+void Yoshi_init(struct Yoshi* yoshi){
+    yoshi->x = 65;
+    yoshi->y = 112;
+    yoshi->yvel = 0;
+    yoshi->gravity = 50;
+    yoshi->border = 40;
+    yoshi->frame = 544;
+    yoshi->move = 0;
+    yoshi->falling = 0;
+    yoshi->animation_delay = 8;
+    yoshi->counter = 0;
+    yoshi->sprite = sprite_init(yoshi->x, yoshi->y, SIZE_32_32, 0, 0, yoshi->frame, 2);
+}
+
 /* move the peach left or right returns if it is at edge of the screen */
-int peach_left(struct Peach* peach) {
+int peach_left(struct Peach* peach, struct Yoshi* yoshi) {
     /* face left */
     sprite_set_horizontal_flip(peach->sprite, 1);
     peach->move = 1;
 
     /* if we are at the left end, just scroll the screen */
     if (peach->x < peach->border) {
+        if (peach->x < yoshi->x - 25){
+            sprite_set_horizontal_flip(yoshi->sprite, 1);
+            yoshi->move = 1;
+        }else{
+            yoshi->x = peach->x + 27;
+        }
         return 1;
     } else {
         /* else move left */
         peach->x--;
+        if (peach->x < yoshi->x - 25){
+            sprite_set_horizontal_flip(yoshi->sprite, 1);
+            yoshi->move = 1;
+            yoshi->x--;
+        }else{
+            yoshi->move = 0;
+            sprite_set_offset(yoshi->sprite, 544);
+        }
         return 0;
     }
 }
-int peach_right(struct Peach* peach) {
+
+
+int peach_right(struct Peach* peach, struct Yoshi* yoshi) {
     /* face right */
     sprite_set_horizontal_flip(peach->sprite, 0);
     peach->move = 1;
 
     /* if we are at the right end, just scroll the screen */
     if (peach->x > (SCREEN_WIDTH - 16 - peach->border)) {
+        if (peach->x > yoshi->x + 25){
+            sprite_set_horizontal_flip(yoshi->sprite, 0);
+            yoshi->move = 1;
+        }else{
+            yoshi->x = peach->x - 27;
+        }
         return 1;
     } else {
         /* else move right */
         peach->x++;
+        if (peach->x > yoshi->x + 25){
+            sprite_set_horizontal_flip(yoshi->sprite, 0);
+            yoshi->move = 1;
+            yoshi->x++;
+        }else{
+            yoshi->move = 0;
+            sprite_set_offset(yoshi->sprite, 544);
+        }
         return 0;
     }
 }
 
-/* stop the peach from walking left/right */
-void peach_stop(struct Peach* peach) {
-    peach->move = 0;
-    peach->frame = 0;
-    peach->counter = 7;
-    sprite_set_offset(peach->sprite, peach->frame);
-}
 
 /* start the peach jumping, unless already fgalling */
 void peach_jump(struct Peach* peach) {
@@ -496,21 +556,40 @@ unsigned short tile_lookup(int x, int y, int xscroll, int yscroll,
     return tilemap[index + offset];
 }
 
+/* stop the peach from walking left/right */
+void peach_stop(struct Peach* peach) {
+    peach->move = 0;
+    peach->frame = peach->stopVal;
+    peach->counter = 7;
+    sprite_set_offset(peach->sprite, peach->frame);
+}
+
+/* stop yoshi from walking */
+void yoshi_stop(struct Yoshi* yoshi){
+    yoshi->move = 0;
+    yoshi->frame = 544;
+    yoshi->counter = 7;
+    sprite_set_offset(yoshi->sprite, yoshi->frame);
+}
+
 /* update the peach */
-void peach_update(struct Peach* peach, int xscroll) {
+void peach_update(struct Peach* peach, struct Yoshi* yoshi, int xscroll, int yscroll) {
     /* update y position and speed if falling */
     if (peach->falling) {
         peach->y += (peach->yvel >> 8);
         peach->yvel += peach->gravity;
     }
 
+    if (peach->y > 175){
+        yscroll = 94;
+    }
     /* check which tile the peach's feet are over */
-    unsigned short tile = tile_lookup(peach->x + 16, peach->y + 64, xscroll, 0, blocks,
+    unsigned short tile = tile_lookup(peach->x + 16, peach->y + 64, xscroll, yscroll, blocks,
             blocks_width, blocks_height);
 
     /* if it's block tile
      * these numbers refer to the tile indices of the blocks the peach can walk on */
-    if ((tile >= 72 && tile <= 82) || (tile >= 97 && tile <= 100) || (tile >= 179 && tile <= 180) /*|| (tile >= 203 && tile <= 204) || (tile >= 85 && tile <= 92)*/) {
+    if ((tile >= 72 && tile <= 83) || (tile >= 96 && tile <= 99) || (tile >= 178 && tile <= 179) || (tile >= 202 && tile <= 203)) {
         /* stop the fall! */
         peach->falling = 0;
         peach->yvel = 0;
@@ -520,12 +599,31 @@ void peach_update(struct Peach* peach, int xscroll) {
 
         /* move him down one because there is a one pixel gap in the image */
         peach->y++;
+        
+        if ((tile == 82 || tile == 83)){
+            peach->frame = 160;
+            sprite_set_offset(peach->sprite, peach->frame);
+            peach->stopVal = 160;
+            peach->move = 0;
+            peach->y = 250;
+            yoshi->move = 0;
+            yoshi->y = 250;
+            wait_vblank();
+            *bg0_y_scroll = 348;
+            *bg1_y_scroll = 348;
+        }else{
+            peach->stopVal = 0;
+        }
+
+        if (tile == 178 || tile == 179){
+            peach->won = 1;
+            peach->move = 0;
+        }
 
     } else {
         /* he is falling now */
         peach->falling = 1;
     }
-
 
     /* update animation if moving */
     if (peach->move) {
@@ -542,6 +640,87 @@ void peach_update(struct Peach* peach, int xscroll) {
 
     /* set on screen position */
     sprite_position(peach->sprite, peach->x, peach->y);
+}
+
+/* update the yoshi */
+void Yoshi_update(struct Yoshi* yoshi, int xscroll, int yscroll) {
+    /* update y position and speed if falling */
+    if (yoshi->falling) {
+        yoshi->y += (yoshi->yvel >> 8);
+        yoshi->yvel += yoshi->gravity;
+    }
+
+    if (yoshi->y > 175){
+        yscroll = 95;
+    }
+    /* check which tile the peach's feet are over */
+    unsigned short tile = tile_lookup(yoshi->x + 16, yoshi->y + 32, xscroll, yscroll, blocks,
+            blocks_width, blocks_height);
+
+    /* if it's block tile
+     * these numbers refer to the tile indices of the blocks the peach can walk on */
+    if ((tile >= 72 && tile <= 83) || (tile >= 96 && tile <= 99) || (tile >= 178 && tile <= 179) || (tile >= 202 && tile <= 203)) {
+        /* stop the fall! */
+        yoshi->falling = 0;
+        yoshi->yvel = 0;
+
+        /* make him line up with the top of a block works by clearing out the lower bits to 0 */
+        yoshi->y &= ~0x3;
+
+        /* move him down one because there is a one pixel gap in the image */
+        //yoshi->y++;
+       
+        
+    } else {
+        /* he is falling now */
+        yoshi->falling = 1;
+    }
+
+    /* update animation if moving */
+    if (yoshi->move) {
+        yoshi->counter++;
+        if (yoshi->counter >= yoshi->animation_delay) {
+            yoshi->frame = yoshi->frame - 32;
+            if (yoshi->frame < 512) {
+               yoshi->frame = 544;
+            }
+            sprite_set_offset(yoshi->sprite, yoshi->frame);
+            yoshi->counter = 0;
+        }
+    }
+
+    /* set on screen position */
+    sprite_position(yoshi->sprite, yoshi->x, yoshi->y);
+}
+
+
+/* Animation for peach when the game is won*/
+void peach_win(struct Peach* peach){
+    peach->frame = 224;
+    sprite_set_offset(peach->sprite, peach->frame);
+}
+
+/* Animation for yoshi when the game is won */
+void yoshi_win(struct Yoshi* yoshi){
+    yoshi->frame = 576;
+    sprite_set_offset(yoshi->sprite, yoshi->frame);
+}
+
+/* Structure for the Mario sprite */
+struct Mario{
+    struct Sprite* sprite;
+    int x, y;
+};
+
+/* Initialize Mario */
+void Mario_init(struct Mario* mario){
+    mario->x = 200;
+    mario->y = 200;
+    mario->sprite = sprite_init(mario->x, mario->y, SIZE_32_32, 0, 0, 352, 1);
+}
+
+void Mario_update(struct Mario* mario){
+    sprite_position(mario->sprite, mario->x, mario->y);
 }
 
 /* Structure for the Goomba sprite */
@@ -611,6 +790,10 @@ int main() {
     struct Peach peach;
     Peach_init(&peach);
 
+    /* create Yoshi*/
+    struct Yoshi yoshi;
+    Yoshi_init(&yoshi);
+
    /* create the Goomba */
     struct Goomba goomba;
     Goomba_init(&goomba);
@@ -619,50 +802,67 @@ int main() {
     struct Heart heart;
     Heart_init(&heart, 100, 100, 846, 2);
 
+    /* create Mario */
+    struct Mario mario;
+    Mario_init(&mario);
+
    /* set initial scroll to 0 */
     int xscroll = 0;
-
+    int yscroll = 0;
     /* loop forever */
     while (1) {
-        /* heart */
-        Heart_update(&heart);
+        if(peach.won){
+            wait_vblank();
+            peach_win(&peach);
+            yoshi_win(&yoshi);
+            sprite_update_all();
+            delay(300);
+        }else{
+            /* heart */
+            Heart_update(&heart);
 
-        /* update the peach */
-        peach_update(&peach, 2*xscroll);
+            Mario_update(&mario);        
 
-        /* now the arrow keys move the peach */
-        if (button_pressed(BUTTON_RIGHT)) {
-            if (peach_right(&peach)) {
-                xscroll++;
+            /* update the peach */
+            peach_update(&peach, &yoshi, 2*xscroll, yscroll);
+
+            Yoshi_update(&yoshi, 2*xscroll, yscroll);
+
+            /* now the arrow keys move the peach */
+            if (button_pressed(BUTTON_RIGHT)) {
+                if (peach_right(&peach, &yoshi)) {
+                    xscroll++;
+                }
+            } else if (button_pressed(BUTTON_LEFT)) {
+                if (peach_left(&peach, &yoshi)) {
+                    xscroll--;
+                }
+            }else {
+                peach_stop(&peach);
+                yoshi_stop(&yoshi);
             }
-        } else if (button_pressed(BUTTON_LEFT)) {
-            if (peach_left(&peach)) {
-                xscroll--;
+
+            /* check for jumping */
+            if (button_pressed(BUTTON_A)) {
+                peach_jump(&peach);
             }
-        } else {
-            peach_stop(&peach);
+
+        
+            /* wait for vblank before scrolling and moving sprites */
+            wait_vblank();
+            *bg0_x_scroll = xscroll;
+            *bg1_x_scroll = 2*xscroll;
+            sprite_update_all();
+        
+            /* delay some */
+            delay(300);
+    
+            /* update the Goomba */
+            Goomba_update(&goomba);
+
+            /* call assembly function to handle Goomba movement */
+//          GoombaMove(goomba.x, goomba.direction);
         }
-
-        /* check for jumping */
-        if (button_pressed(BUTTON_A)) {
-            peach_jump(&peach);
-        }
-
-        /* wait for vblank before scrolling and moving sprites */
-        wait_vblank();
-        *bg0_x_scroll = xscroll;
-        *bg1_x_scroll = 2*xscroll;
-        sprite_update_all();
-
-        /* delay some */
-        delay(300);
-
-       /* update the Goomba */
-        Goomba_update(&goomba);
-
-        /* call assembly function to handle Goomba movement */
-//        GoombaMove(goomba.x, goomba.direction);
-
    }
 }
 
