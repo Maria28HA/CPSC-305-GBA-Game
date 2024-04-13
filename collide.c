@@ -559,6 +559,23 @@ void Goomba_init(struct Goomba* goomba) {
     goomba->sprite = sprite_init(goomba->x, goomba->y, SIZE_32_32, 0, 0, 736, 2); // Create the sprite
 }
 
+/* Structure for heart sprite */
+struct Heart {
+    struct Sprite* sprite;
+    int x, y;
+};
+
+/* Initialize a heart sprite */
+void Heart_init(struct Heart* heart, int x, int y, int tile_index, int palette_bank) {
+    heart->x = 0;
+    heart->y = 2;
+    heart->sprite = sprite_init(2, 0, SIZE_32_16, 0, 0, 846, 2);
+}
+
+void Heart_update(struct Heart* heart) {
+    sprite_position(heart->sprite, heart->x, heart->y);
+}
+
 /* Update the Goomba's position and direction */
 void Goomba_update(struct Goomba* goomba) {
     // Move the Goomba
@@ -598,11 +615,18 @@ int main() {
     struct Goomba goomba;
     Goomba_init(&goomba);
 
+   /* create the Heart */
+    struct Heart heart;
+    Heart_init(&heart, 100, 100, 846, 2);
+
    /* set initial scroll to 0 */
     int xscroll = 0;
 
     /* loop forever */
     while (1) {
+        /* heart */
+        Heart_update(&heart);
+
         /* update the peach */
         peach_update(&peach, 2*xscroll);
 
