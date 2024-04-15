@@ -714,13 +714,48 @@ struct Mario{
 
 /* Initialize Mario */
 void Mario_init(struct Mario* mario){
-    mario->x = 200;
-    mario->y = 200;
-    mario->sprite = sprite_init(mario->x, mario->y, SIZE_32_32, 0, 0, 352, 1);
+    mario->x = 400;
+    mario->y = 208;
+    mario->sprite = sprite_init(mario->x, mario->y, SIZE_32_32, 0, 0, 352, 3);
 }
 
-void Mario_update(struct Mario* mario){
+void Mario_update(struct Mario* mario, struct Peach* peach, int xscroll, int yscroll){
     sprite_position(mario->sprite, mario->x, mario->y);
+    if (peach->y > 175){
+        yscroll = 94;
+        xscroll *= -1;
+    }
+        sprite_move(mario->sprite, xscroll, yscroll);
+}
+
+void mario_win(struct Mario* mario){
+    sprite_set_offset(mario->sprite, 480);
+}
+
+/* Structure for the Toad sprite*/
+struct Toad{
+    struct Sprite* sprite;
+    int x, y;
+};
+
+/* Initialize Toad */
+void Toad_init(struct Toad* toad){
+    toad->x = 365;
+    toad->y = 178;
+    toad->sprite = sprite_init(toad->x, toad->y, SIZE_32_64, 0, 0, 672, 3);
+}
+
+void Toad_update(struct Toad* toad, struct Peach* peach, int xscroll, int yscroll){
+    sprite_position(toad->sprite, toad->x, toad->y);
+    if (peach->y > 175){
+        yscroll = 94;
+        xscroll *= -1;
+    }
+    sprite_move(toad->sprite, xscroll, yscroll);
+}
+
+void toad_win(struct Toad* toad){
+    sprite_set_offset(toad->sprite, 608);
 }
 
 /* Structure for the Goomba sprite */
@@ -872,6 +907,10 @@ Coin_init(&coins[7], 450, 50);
     struct Mario mario;
     Mario_init(&mario);
 
+    /* create Toad */
+    struct Toad toad;
+    Toad_init(&toad);
+
    /* set initial scroll to 0 */
     int xscroll = 0;
     int yscroll = 0;
@@ -881,13 +920,17 @@ Coin_init(&coins[7], 450, 50);
             wait_vblank();
             peach_win(&peach);
             yoshi_win(&yoshi);
+            toad_win(&toad);
+            mario_win(&mario);
             sprite_update_all();
             delay(300);
         }else{
             /* heart */
             Heart_update(&heart);
 
-            Mario_update(&mario);        
+            Mario_update(&mario, &peach, 2*xscroll, yscroll); 
+
+            Toad_update(&toad, &peach, 2*xscroll, yscroll);        
 
             /* update the peach */
             peach_update(&peach, &yoshi, 2*xscroll, yscroll);
