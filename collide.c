@@ -899,6 +899,13 @@ void Goomba_update(struct Goomba* goomba) {
 
     // Update Goomba sprite position
     sprite_position(goomba->sprite, goomba->x, goomba->y);
+
+    //Hopefully flip the sprite if walking left
+    if (goomba->direction == -1) {
+        sprite_set_horizontal_flip(goomba->sprite, 1); // Flip horizontally
+    } else {
+        sprite_set_horizontal_flip(goomba->sprite, 0); // Reset horizontal flip
+    }
 }
 
 /* the main function */
