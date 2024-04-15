@@ -346,6 +346,16 @@ void setup_sprite_image() {
     memcpy16_dma((unsigned short*) sprite_image_memory, (unsigned short*) FinalSprites_data, (FinalSprites_width * FinalSprites_height) / 2);
 }
 
+/* Function to set the index of a sprite */
+void sprite_set_index(struct Sprite* sprite, int index) {
+    /* Calculate the tile offset based on the index */
+    int tile_offset = index * (sprite->attribute2 & 0x03ff);
+
+    /* Update the sprite's attribute2 with the new tile offset */
+    sprite->attribute2 = (sprite->attribute2 & 0xfc00) | (tile_offset & 0x03ff);
+}
+
+
 /* a struct for the peach's logic and behavior */
 struct Peach {
     /* the actual sprite attribute info */
@@ -790,6 +800,34 @@ void Heart_update(struct Heart* heart) {
     sprite_position(heart->sprite, heart->x, heart->y);
 }
 
+/* Structure for number */
+struct Number {
+    struct Sprite* sprite;
+    int x, y;
+    int current_index; // Store the current index of the sprite
+};
+
+/* Initialize a number sprite */
+void Number_init(struct Number* number, int x, int y, int sprite_index) {
+    number->x = x;
+    number->y = y;
+    number->sprite = sprite_init(x, y, SIZE_8_32, 0, 0, sprite_index, 2);
+    number->current_index = 864; // Initial index
+}
+
+/* Function to update the number sprite based on the score */
+void Number_update(struct Number* number, int score) {
+    // Calculate the index based on the score
+    int index = 864 + (score * 8); // Assuming 'score' is a global variable
+
+    // Update the sprite's index only if it has changed
+    if (index != number->current_index) {
+        sprite_position(number->sprite, number->x, number->y); // Update position first
+        number->current_index = index; // Update the current index
+        sprite_set_index(number->sprite, index); // Set the sprite index
+    }
+}
+
 /* Structure for coin sprite */
 struct Coin {
     struct Sprite* sprite;
@@ -805,7 +843,9 @@ void Coin_init(struct Coin* coin, int x, int y) {
     coin->sprite = sprite_init(x, y, SIZE_32_16, 0, 0, 830, 2); // Create the sprite
 }
 
-void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xscroll, int yscroll) {
+extern int increment_score();
+
+void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xscroll, int yscroll, struct Number* number) {
     for (int i = 0; i < num_coins; i++) {
         struct Coin* coin = &coins[i];
         if (!coin->collected) {
@@ -823,6 +863,9 @@ void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xsc
 
                 // Hide the coin's sprite
                 sprite_position(coin->sprite, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+                int score = increment_score();
+                Number_update(number, score);
             } else {
                 // Update the coin's sprite position
                 sprite_position(coin->sprite, coin_x, coin_y);
@@ -830,7 +873,6 @@ void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xsc
         }
     }
 }
-
 
 // Function to get the current background scroll X position
 int get_background_scroll_x() {
@@ -889,6 +931,12 @@ int main() {
     struct Heart heart;
     Heart_init(&heart, 100, 100, 846, 2);
 
+    /* Initialize score number */
+    struct Number number;
+    Number_init(&number, 220, 5, 864);    
+
+    int score = 0;
+
     /* Initialize coins */
     struct Coin coins[11];
     Coin_init(&coins[0], 50, 50); // Example: Coin at (50, 50)
@@ -926,6 +974,7 @@ Coin_init(&coins[7], 450, 50);
         }else{
             /* heart */
             Heart_update(&heart);
+           
 
             Mario_update(&mario, &peach, 2*xscroll, yscroll); 
 
@@ -960,7 +1009,7 @@ Coin_init(&coins[7], 450, 50);
         *bg0_x_scroll = xscroll;
         *bg1_x_scroll = 2 * xscroll;
 
-        Coin_update(coins, 11, &peach, 2*xscroll, yscroll);
+        Coin_update(coins, 11, &peach, 2*xscroll, yscroll, &number);
 
         sprite_update_all();
             /* delay some */
