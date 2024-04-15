@@ -9,9 +9,13 @@ Assembly code
         peach looses live
     Score
 main.c
-    Princess Peach
-        movement
-        coins
-        Yoshi Following (Bonus)
-        win animation
+    Princess Peach (Done)
+        movement (Done)
+        coins   
+        Yoshi Following (Bonus) (Done, he doesn't jump)
+        win animation (Done for all characters)
+
+Kenzie To Do
+    - Put in the top barrier so she can't jump off screen
+    - Put in the wall barrier for the underground part
         
