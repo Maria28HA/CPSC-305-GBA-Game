@@ -755,6 +755,59 @@ void Heart_update(struct Heart* heart) {
     sprite_position(heart->sprite, heart->x, heart->y);
 }
 
+/* Structure for coin sprite */
+struct Coin {
+    struct Sprite* sprite;
+    int x, y;
+    int collected; // Flag to indicate if the coin is collected
+};
+
+/* Initialize a coin sprite */
+void Coin_init(struct Coin* coin, int x, int y) {
+    coin->x = x;
+    coin->y = y;
+    coin->collected = 0;
+    coin->sprite = sprite_init(x, y, SIZE_32_16, 0, 0, 830, 2); // Create the sprite
+}
+
+void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xscroll, int yscroll) {
+    for (int i = 0; i < num_coins; i++) {
+        struct Coin* coin = &coins[i];
+        if (!coin->collected) {
+            // Update the coin's position based on background scroll
+            int coin_x = coin->x - xscroll;
+            int coin_y = coin->y - yscroll;
+
+            // Check for collision with Peach
+            if (peach->x < coin_x + 16 && peach->x + 32 > coin_x &&
+                peach->y < coin_y + 16 && peach->y + 32 > coin_y) {
+                coin->collected = 1; // Set collected flag
+                // Move the coin off screen
+                coin->x = -16; // Move off screen
+                coin->y = -16; // Move off screen
+
+                // Hide the coin's sprite
+                sprite_position(coin->sprite, SCREEN_WIDTH, SCREEN_HEIGHT);
+            } else {
+                // Update the coin's sprite position
+                sprite_position(coin->sprite, coin_x, coin_y);
+            }
+        }
+    }
+}
+
+
+// Function to get the current background scroll X position
+int get_background_scroll_x() {
+    return *bg0_x_scroll;
+}
+
+// Function to get the current background scroll Y position
+int get_background_scroll_y() {
+    return *bg0_y_scroll;
+}
+
+
 /* Update the Goomba's position and direction */
 void Goomba_update(struct Goomba* goomba) {
     // Move the Goomba
@@ -802,6 +855,19 @@ int main() {
     struct Heart heart;
     Heart_init(&heart, 100, 100, 846, 2);
 
+    /* Initialize coins */
+    struct Coin coins[11];
+    Coin_init(&coins[0], 50, 50); // Example: Coin at (50, 50)
+
+    // Add more coins on top of different tiles
+    Coin_init(&coins[1], 150, 50);
+Coin_init(&coins[2], 200, 100);
+Coin_init(&coins[3], 250, 50);
+Coin_init(&coins[4], 300, 50);
+Coin_init(&coins[5], 350, 50);
+Coin_init(&coins[6], 400, 50);
+Coin_init(&coins[7], 450, 50);
+
     /* create Mario */
     struct Mario mario;
     Mario_init(&mario);
@@ -846,14 +912,15 @@ int main() {
             if (button_pressed(BUTTON_A)) {
                 peach_jump(&peach);
             }
-
-        
+            
             /* wait for vblank before scrolling and moving sprites */
             wait_vblank();
-            *bg0_x_scroll = xscroll;
-            *bg1_x_scroll = 2*xscroll;
-            sprite_update_all();
-        
+        *bg0_x_scroll = xscroll;
+        *bg1_x_scroll = 2 * xscroll;
+
+        Coin_update(coins, 11, &peach, 2*xscroll, yscroll);
+
+        sprite_update_all();
             /* delay some */
             delay(300);
     
