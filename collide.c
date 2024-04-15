@@ -842,11 +842,13 @@ int get_background_scroll_y() {
     return *bg0_y_scroll;
 }
 
+/* Call assembly function to keep the Goomba moving left and right */
+void GoombaMove(int* x, int* direction); // Assembly function declaration
 
 /* Update the Goomba's position and direction */
 void Goomba_update(struct Goomba* goomba) {
-    // Move the Goomba
-    goomba->x += goomba->direction; // Update x-coordinate based on direction
+
+    GoombaMove(&goomba->x, &goomba->direction);
 
     // Check boundaries (adjust as needed)
     if (goomba->x <= 0 || goomba->x >= SCREEN_WIDTH - 32) {
@@ -856,9 +858,6 @@ void Goomba_update(struct Goomba* goomba) {
     // Update Goomba sprite position
     sprite_position(goomba->sprite, goomba->x, goomba->y);
 }
-
-/* Call assembly function to keep the Goomba moving left and right */
-void GoombaMove(int x, int direction); // Assembly function declaration
 
 /* the main function */
 int main() {
@@ -971,7 +970,7 @@ Coin_init(&coins[7], 450, 50);
             Goomba_update(&goomba);
 
             /* call assembly function to handle Goomba movement */
-//          GoombaMove(goomba.x, goomba.direction);
+ //           GoombaMove(goomba.x, goomba.direction);
         }
    }
 }
