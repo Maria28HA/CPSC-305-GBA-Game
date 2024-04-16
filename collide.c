@@ -783,14 +783,22 @@ struct Goomba {
     struct Sprite* sprite;
     int x, y;
     int direction; // -1 for left, 1 for right
+    int frame;
+    int animation_delay;
+    int counter;
+    int move;
 };
 
 /* Initialize the Goomba */
 void Goomba_init(struct Goomba* goomba) {
-    goomba->x = 50; // Initial x-coordinate
+    goomba->x = 10; // Initial x-coordinate
     goomba->y = 113; // Initial y-coordinate
     goomba->direction = 1; // Initial direction (right)
-    goomba->sprite = sprite_init(goomba->x, goomba->y, SIZE_32_32, 0, 0, 736, 2); // Create the sprite
+    goomba->frame = 744;
+    goomba->animation_delay = 8;
+    goomba->counter = 0;
+    goomba->move = 1;
+    goomba->sprite = sprite_init(goomba->x, goomba->y, SIZE_32_32, 0, 0, goomba->frame, 2); // Create the sprite
 }
 
 /* Structure for heart sprite */
@@ -952,6 +960,19 @@ void Goomba_update(struct Goomba* goomba, struct Peach* peach) {
         sprite_set_horizontal_flip(goomba->sprite, 1); // Flip horizontally
     } else {
         sprite_set_horizontal_flip(goomba->sprite, 0); // Reset horizontal flip
+    }
+
+    // update animation if moving
+    if (goomba->move) {
+        goomba->counter++;
+        if (goomba->counter >= goomba->animation_delay) {
+            goomba->frame = goomba->frame + 32;
+            if (goomba->frame > 32) {
+                goomba->frame = 744;
+            }
+            sprite_set_offset(goomba->sprite, goomba->frame);
+            goomba->counter = 0;
+        }
     }
 
 }
