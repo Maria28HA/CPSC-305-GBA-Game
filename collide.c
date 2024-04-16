@@ -971,7 +971,7 @@ Coin_init(&coins[7], 450, 50);
             Goomba_update(&goomba);
 
             /* call assembly function to handle Goomba movement */
-//          GoombaMove(goomba.x, goomba.direction);
+          GoombaMove(goomba.x, goomba.direction);
         }
    }
 }
