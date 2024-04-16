@@ -346,6 +346,16 @@ void setup_sprite_image() {
     memcpy16_dma((unsigned short*) sprite_image_memory, (unsigned short*) FinalSprites_data, (FinalSprites_width * FinalSprites_height) / 2);
 }
 
+/* Function to set the index of a sprite */
+void sprite_set_index(struct Sprite* sprite, int index) {
+    /* Calculate the tile offset based on the index */
+    int tile_offset = index * (sprite->attribute2 & 0x03ff);
+
+    /* Update the sprite's attribute2 with the new tile offset */
+    sprite->attribute2 = (sprite->attribute2 & 0xfc00) | (tile_offset & 0x03ff);
+}
+
+
 /* a struct for the peach's logic and behavior */
 struct Peach {
     /* the actual sprite attribute info */
@@ -777,17 +787,76 @@ void Goomba_init(struct Goomba* goomba) {
 struct Heart {
     struct Sprite* sprite;
     int x, y;
+    int active; // Flag to indicate if the heart is active
 };
 
 /* Initialize a heart sprite */
-void Heart_init(struct Heart* heart, int x, int y, int tile_index, int palette_bank) {
+void Heart_init(struct Heart* heart, int x, int y) {
     heart->x = 0;
     heart->y = 2;
-    heart->sprite = sprite_init(2, 0, SIZE_32_16, 0, 0, 846, 2);
+    heart->active = 1; // Initially, the heart is active
+    heart->sprite = sprite_init(x, y, SIZE_32_16, 0, 0, 846, 2);
 }
 
-void Heart_update(struct Heart* heart) {
-    sprite_position(heart->sprite, heart->x, heart->y);
+/* Update the heart sprite position */
+void Heart_update(struct Heart* heart, int lives) {
+    for (int i = 0; i < 3; i++) {
+        if (i < lives) {
+            // Heart is active
+            heart[i].active = 1;
+            sprite_position(heart[i].sprite, heart[i].x, heart[i].y);
+        } else {
+            // Heart is inactive
+            heart[i].active = 0;
+            sprite_position(heart[i].sprite, -32, -32); // Move off screen
+        }
+    }
+}
+
+/* Decrement Peach's lives when she collides with a Goomba */
+void Peach_collide(struct Peach* peach, struct Goomba* goomba, struct Heart* hearts, int* num_lives) {
+    // Check collision between Peach and Goomba
+    if (peach->x < goomba->x + 32 &&
+        peach->x + 32 > goomba->x &&
+        peach->y < goomba->y + 32 &&
+        peach->y + 64 > goomba->y) {
+        // Reduce Peach's lives
+        (*num_lives)--;
+        // Update heart sprites
+        Heart_update(hearts, *num_lives);
+        // Reset Peach's position or do other necessary actions
+    }
+}
+
+
+/* Structure for number */
+struct Number {
+    struct Sprite* sprite;
+    int x, y;
+    int current_index; // Store the current index of the sprite
+};
+
+/* Initialize a number sprite */
+void Number_init(struct Number* number, int x, int y, int sprite_index) {
+    number->x = x;
+    number->y = y;
+    number->sprite = sprite_init(x, y, SIZE_8_32, 0, 0, sprite_index, 2);
+    number->current_index = 864; // Initial index
+}
+
+
+void sprite_set_tile_offset(struct Sprite* sprite, int tile_offset) {
+    /* Update the sprite's attribute2 with the new tile offset */
+    sprite->attribute2 = (sprite->attribute2 & 0xfc00) | (tile_offset & 0x03ff);
+}
+
+/* Function to update the number sprite based on the score */
+void Number_update(struct Number* number, int score) {
+    // Calculate the index based on the score
+    int index = 864 + (score * 8); // Assuming 'score' is a global variable
+
+    // Set the sprite's tile offset directly
+    sprite_set_tile_offset(number->sprite, index);
 }
 
 /* Structure for coin sprite */
@@ -805,7 +874,10 @@ void Coin_init(struct Coin* coin, int x, int y) {
     coin->sprite = sprite_init(x, y, SIZE_32_16, 0, 0, 830, 2); // Create the sprite
 }
 
-void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xscroll, int yscroll) {
+int increment_score();
+int score = 0;
+
+void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xscroll, int yscroll, struct Number* number) {
     for (int i = 0; i < num_coins; i++) {
         struct Coin* coin = &coins[i];
         if (!coin->collected) {
@@ -823,6 +895,10 @@ void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xsc
 
                 // Hide the coin's sprite
                 sprite_position(coin->sprite, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+                int new_score = increment_score();
+                Number_update(number, new_score);
+                score = new_score;
             } else {
                 // Update the coin's sprite position
                 sprite_position(coin->sprite, coin_x, coin_y);
@@ -830,7 +906,6 @@ void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xsc
         }
     }
 }
-
 
 // Function to get the current background scroll X position
 int get_background_scroll_x() {
@@ -842,11 +917,13 @@ int get_background_scroll_y() {
     return *bg0_y_scroll;
 }
 
+/* Call assembly function to keep the Goomba moving left and right */
+void GoombaMove(int* x, int* direction); // Assembly function declaration
 
 /* Update the Goomba's position and direction */
 void Goomba_update(struct Goomba* goomba) {
-    // Move the Goomba
-    goomba->x += goomba->direction; // Update x-coordinate based on direction
+
+    GoombaMove(&goomba->x, &goomba->direction);
 
     // Check boundaries (adjust as needed)
     if (goomba->x <= 0 || goomba->x >= SCREEN_WIDTH - 32) {
@@ -855,10 +932,14 @@ void Goomba_update(struct Goomba* goomba) {
 
     // Update Goomba sprite position
     sprite_position(goomba->sprite, goomba->x, goomba->y);
-}
 
-/* Call assembly function to keep the Goomba moving left and right */
-void GoombaMove(int x, int direction); // Assembly function declaration
+    //Hopefully flip the sprite if walking left
+    if (goomba->direction == -1) {
+        sprite_set_horizontal_flip(goomba->sprite, 1); // Flip horizontally
+    } else {
+        sprite_set_horizontal_flip(goomba->sprite, 0); // Reset horizontal flip
+    }
+}
 
 /* the main function */
 int main() {
@@ -886,9 +967,18 @@ int main() {
     struct Goomba goomba;
     Goomba_init(&goomba);
 
-   /* create the Heart */
-    struct Heart heart;
-    Heart_init(&heart, 100, 100, 846, 2);
+    /* Create heart sprites */
+    struct Heart hearts[3];
+    for (int i = 0; i < 3; i++) {
+        Heart_init(&hearts[i], 1 + i * 17, 5);
+    }
+    int num_lives = 3;
+
+    /* Initialize score number */
+    struct Number number;
+    Number_init(&number, 220, 5, 864);    
+
+    int score = 0;
 
     /* Initialize coins */
     struct Coin coins[11];
@@ -925,8 +1015,8 @@ Coin_init(&coins[7], 450, 50);
             sprite_update_all();
             delay(300);
         }else{
-            /* heart */
-            Heart_update(&heart);
+            // Check collision between Peach and Goomba
+            Peach_collide(&peach, &goomba, hearts, &num_lives);
 
             Mario_update(&mario, &peach, 2*xscroll, yscroll); 
 
@@ -961,17 +1051,22 @@ Coin_init(&coins[7], 450, 50);
         *bg0_x_scroll = xscroll;
         *bg1_x_scroll = 2 * xscroll;
 
-        Coin_update(coins, 11, &peach, 2*xscroll, yscroll);
+        Coin_update(coins, 11, &peach, 2*xscroll, yscroll, &number);
 
         sprite_update_all();
             /* delay some */
+
             delay(300);
     
             /* update the Goomba */
             Goomba_update(&goomba);
 
             /* call assembly function to handle Goomba movement */
+<<<<<<< HEAD
           GoombaMove(goomba.x, goomba.direction);
+=======
+ //           GoombaMove(goomba.x, goomba.direction);
+>>>>>>> 5c7eb1f616730f7831631cd6b8ac262b3c691ae8
         }
    }
 }
