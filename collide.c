@@ -815,17 +815,19 @@ void Number_init(struct Number* number, int x, int y, int sprite_index) {
     number->current_index = 864; // Initial index
 }
 
+
+void sprite_set_tile_offset(struct Sprite* sprite, int tile_offset) {
+    /* Update the sprite's attribute2 with the new tile offset */
+    sprite->attribute2 = (sprite->attribute2 & 0xfc00) | (tile_offset & 0x03ff);
+}
+
 /* Function to update the number sprite based on the score */
 void Number_update(struct Number* number, int score) {
     // Calculate the index based on the score
     int index = 864 + (score * 8); // Assuming 'score' is a global variable
 
-    // Update the sprite's index only if it has changed
-    if (index != number->current_index) {
-        sprite_position(number->sprite, number->x, number->y); // Update position first
-        number->current_index = index; // Update the current index
-        sprite_set_index(number->sprite, index); // Set the sprite index
-    }
+    // Set the sprite's tile offset directly
+    sprite_set_tile_offset(number->sprite, index);
 }
 
 /* Structure for coin sprite */
@@ -843,7 +845,8 @@ void Coin_init(struct Coin* coin, int x, int y) {
     coin->sprite = sprite_init(x, y, SIZE_32_16, 0, 0, 830, 2); // Create the sprite
 }
 
-extern int increment_score();
+int increment_score();
+int score = 0;
 
 void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xscroll, int yscroll, struct Number* number) {
     for (int i = 0; i < num_coins; i++) {
@@ -864,8 +867,9 @@ void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xsc
                 // Hide the coin's sprite
                 sprite_position(coin->sprite, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-                int score = increment_score();
-                Number_update(number, score);
+                int new_score = increment_score();
+                Number_update(number, new_score);
+                score = new_score;
             } else {
                 // Update the coin's sprite position
                 sprite_position(coin->sprite, coin_x, coin_y);
@@ -1020,6 +1024,7 @@ Coin_init(&coins[7], 450, 50);
 
         sprite_update_all();
             /* delay some */
+
             delay(300);
     
             /* update the Goomba */
