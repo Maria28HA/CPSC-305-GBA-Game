@@ -792,7 +792,7 @@ struct Goomba {
 /* Initialize the Goomba */
 void Goomba_init(struct Goomba* goomba) {
     goomba->x = 10; // Initial x-coordinate
-    goomba->y = 113; // Initial y-coordinate
+    goomba->y = 121; // Initial y-coordinate
     goomba->direction = 1; // Initial direction (right)
     goomba->frame = 744;
     goomba->animation_delay = 8;
@@ -967,7 +967,7 @@ void Goomba_update(struct Goomba* goomba, struct Peach* peach) {
         goomba->counter++;
         if (goomba->counter >= goomba->animation_delay) {
             goomba->frame = goomba->frame + 32;
-            if (goomba->frame > 32) {
+            if (goomba->frame > 776) {
                 goomba->frame = 744;
             }
             sprite_set_offset(goomba->sprite, goomba->frame);
