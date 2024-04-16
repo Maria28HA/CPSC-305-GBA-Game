@@ -648,6 +648,16 @@ void peach_update(struct Peach* peach, struct Yoshi* yoshi, int xscroll, int ysc
         }
     }
 
+    if (peach->y < -60){
+        peach->y = -60;
+        peach->falling = 1;
+    }
+    if (peach->y > 150){
+        if (peach->y < 200){
+            peach->y = 200;
+            peach->falling = 1;
+        }
+    }
     /* set on screen position */
     sprite_position(peach->sprite, peach->x, peach->y);
 }
@@ -778,7 +788,7 @@ struct Goomba {
 /* Initialize the Goomba */
 void Goomba_init(struct Goomba* goomba) {
     goomba->x = 50; // Initial x-coordinate
-    goomba->y = 100; // Initial y-coordinate
+    goomba->y = 113; // Initial y-coordinate
     goomba->direction = 1; // Initial direction (right)
     goomba->sprite = sprite_init(goomba->x, goomba->y, SIZE_32_32, 0, 0, 736, 2); // Create the sprite
 }
@@ -921,13 +931,17 @@ int get_background_scroll_y() {
 void GoombaMove(int* x, int* direction); // Assembly function declaration
 
 /* Update the Goomba's position and direction */
-void Goomba_update(struct Goomba* goomba) {
+void Goomba_update(struct Goomba* goomba, struct Peach* peach) {
 
     GoombaMove(&goomba->x, &goomba->direction);
 
     // Check boundaries (adjust as needed)
-    if (goomba->x <= 0 || goomba->x >= SCREEN_WIDTH - 32) {
+    if (goomba->x <= 0 || goomba->x >= 100) {
         goomba->direction *= -1; // Reverse direction if Goomba reaches screen edges
+    }
+
+    if(peach->y > 175){
+        goomba->y = 160;   
     }
 
     // Update Goomba sprite position
@@ -939,6 +953,7 @@ void Goomba_update(struct Goomba* goomba) {
     } else {
         sprite_set_horizontal_flip(goomba->sprite, 0); // Reset horizontal flip
     }
+
 }
 
 /* the main function */
@@ -1059,7 +1074,7 @@ Coin_init(&coins[7], 450, 50);
             delay(300);
     
             /* update the Goomba */
-            Goomba_update(&goomba);
+            Goomba_update(&goomba, &peach);
 
         }
    }
