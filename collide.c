@@ -787,18 +787,47 @@ void Goomba_init(struct Goomba* goomba) {
 struct Heart {
     struct Sprite* sprite;
     int x, y;
+    int active; // Flag to indicate if the heart is active
 };
 
 /* Initialize a heart sprite */
-void Heart_init(struct Heart* heart, int x, int y, int tile_index, int palette_bank) {
+void Heart_init(struct Heart* heart, int x, int y) {
     heart->x = 0;
     heart->y = 2;
-    heart->sprite = sprite_init(2, 0, SIZE_32_16, 0, 0, 846, 2);
+    heart->active = 1; // Initially, the heart is active
+    heart->sprite = sprite_init(x, y, SIZE_32_16, 0, 0, 846, 2);
 }
 
-void Heart_update(struct Heart* heart) {
-    sprite_position(heart->sprite, heart->x, heart->y);
+/* Update the heart sprite position */
+void Heart_update(struct Heart* heart, int lives) {
+    for (int i = 0; i < 3; i++) {
+        if (i < lives) {
+            // Heart is active
+            heart[i].active = 1;
+            sprite_position(heart[i].sprite, heart[i].x, heart[i].y);
+        } else {
+            // Heart is inactive
+            heart[i].active = 0;
+            sprite_position(heart[i].sprite, -32, -32); // Move off screen
+        }
+    }
 }
+
+/* Decrement Peach's lives when she collides with a Goomba */
+void Peach_collide(struct Peach* peach, struct Goomba* goomba, struct Heart* hearts, int* num_lives) {
+    // Check collision between Peach and Goomba
+    if (peach->x < goomba->x + 32 &&
+        peach->x + 32 > goomba->x &&
+        peach->y < goomba->y + 32 &&
+        peach->y + 64 > goomba->y) {
+        // Reduce Peach's lives
+        (*num_lives)--;
+        // Update heart sprites
+        Heart_update(hearts, *num_lives);
+        // Reset Peach's position or do other necessary actions
+    }
+}
+
 
 /* Structure for number */
 struct Number {
@@ -938,9 +967,12 @@ int main() {
     struct Goomba goomba;
     Goomba_init(&goomba);
 
-   /* create the Heart */
-    struct Heart heart;
-    Heart_init(&heart, 100, 100, 846, 2);
+    /* Create heart sprites */
+    struct Heart hearts[3];
+    for (int i = 0; i < 3; i++) {
+        Heart_init(&hearts[i], 1 + i * 17, 5);
+    }
+    int num_lives = 3;
 
     /* Initialize score number */
     struct Number number;
@@ -983,9 +1015,8 @@ Coin_init(&coins[7], 450, 50);
             sprite_update_all();
             delay(300);
         }else{
-            /* heart */
-            Heart_update(&heart);
-           
+            // Check collision between Peach and Goomba
+            Peach_collide(&peach, &goomba, hearts, &num_lives);
 
             Mario_update(&mario, &peach, 2*xscroll, yscroll); 
 
