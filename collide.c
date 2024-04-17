@@ -596,10 +596,16 @@ void peach_update(struct Peach* peach, struct Yoshi* yoshi, int xscroll, int ysc
     /* check which tile the peach's feet are over */
     unsigned short tile = tile_lookup(peach->x + 16, peach->y + 64, xscroll, yscroll, blocks,
             blocks_width, blocks_height);
+    
+    unsigned short left = tile_lookup(peach->x + 10, peach->y + 48, xscroll, yscroll, blocks, blocks_width, 
+                blocks_height);
 
+    unsigned short right = tile_lookup(peach->x + 20, peach->y + 48, xscroll, yscroll, blocks, blocks_width, 
+                blocks_height);
     /* if it's block tile
      * these numbers refer to the tile indices of the blocks the peach can walk on */
-    if ((tile >= 72 && tile <= 83) || (tile >= 96 && tile <= 99) || (tile >= 178 && tile <= 179) || (tile >= 202 && tile <= 203)) {
+    if ((tile >= 72 && tile <= 83) || (tile >= 96 && tile <= 99) || (tile >= 178 && tile <= 179) || 
+        (tile >= 202 && tile <= 203) || (tile >= 246 && tile <= 247) || (tile >= 258 && tile <= 259)) {
         /* stop the fall! */
         peach->falling = 0;
         peach->yvel = 0;
@@ -609,7 +615,13 @@ void peach_update(struct Peach* peach, struct Yoshi* yoshi, int xscroll, int ysc
 
         /* move him down one because there is a one pixel gap in the image */
         peach->y++;
-        
+       
+        if (left == 246){
+            peach->x += 1;
+        }else if (right == 247 || right == 259){
+            peach->x -= 1;
+        }
+ 
         if ((tile == 82 || tile == 83)){
             peach->frame = 160;
             sprite_set_offset(peach->sprite, peach->frame);
@@ -679,7 +691,7 @@ void Yoshi_update(struct Yoshi* yoshi, int xscroll, int yscroll) {
 
     /* if it's block tile
      * these numbers refer to the tile indices of the blocks the peach can walk on */
-    if ((tile >= 72 && tile <= 83) || (tile >= 96 && tile <= 99) || (tile >= 178 && tile <= 179) || (tile >= 202 && tile <= 203)) {
+    if ((tile >= 72 && tile <= 83) || (tile >= 96 && tile <= 99) || (tile >= 178 && tile <= 179) || (tile >= 202 && tile <= 203) || (tile >= 246 && tile <= 247) || (tile >= 258 && tile <= 259)) {
         /* stop the fall! */
         yoshi->falling = 0;
         yoshi->yvel = 0;
@@ -717,6 +729,12 @@ void Yoshi_update(struct Yoshi* yoshi, int xscroll, int yscroll) {
 /* Animation for peach when the game is won*/
 void peach_win(struct Peach* peach){
     peach->frame = 224;
+    sprite_set_offset(peach->sprite, peach->frame);
+}
+
+/* Animation for peach when she loses */
+void peach_lose(struct Peach* peach){
+    peach->frame = 288;
     sprite_set_offset(peach->sprite, peach->frame);
 }
 
