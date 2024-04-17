@@ -810,29 +810,35 @@ struct Heart {
 
 /* Initialize a heart sprite */
 void Heart_init(struct Heart* heart, int x, int y) {
-    heart->x = 0;
-    heart->y = 2;
+    heart->x = x;
+    heart->y = y;
     heart->active = 1; // Initially, the heart is active
     heart->sprite = sprite_init(x, y, SIZE_32_16, 0, 0, 846, 2);
 }
 
 /* Update the heart sprite position */
-void Heart_update(struct Heart* heart, int lives) {
-    for (int i = 0; i < 3; i++) {
+void Heart_update(struct Heart* hearts, int num_hearts, int lives) {
+    for (int i = 0; i < num_hearts; i++) {
         if (i < lives) {
             // Heart is active
-            heart[i].active = 1;
-            sprite_position(heart[i].sprite, heart[i].x, heart[i].y);
+            hearts[i].active = 1;
+            sprite_position(hearts[i].sprite, hearts[i].x, hearts[i].y);
         } else {
             // Heart is inactive
-            heart[i].active = 0;
-            sprite_position(heart[i].sprite, -32, -32); // Move off screen
+            hearts[i].active = 0;
+            sprite_position(hearts[i].sprite, -32, -32); // Move off screen
         }
     }
 }
 
 /* Decrement Peach's lives when she collides with a Goomba */
-void Peach_collide(struct Peach* peach, struct Goomba* goomba, struct Heart* hearts, int* num_lives) {
+void Peach_collide(struct Peach* peach, struct Goomba* goomba, struct Heart* hearts, int* num_lives, int* cooldown_timer) {
+    // Check if Peach is currently on cooldown
+    if (*cooldown_timer > 0) {
+        // Peach is on cooldown, do not decrement lives
+        return;
+    }
+
     // Check collision between Peach and Goomba
     if (peach->x < goomba->x + 32 &&
         peach->x + 32 > goomba->x &&
@@ -841,8 +847,19 @@ void Peach_collide(struct Peach* peach, struct Goomba* goomba, struct Heart* hea
         // Reduce Peach's lives
         (*num_lives)--;
         // Update heart sprites
-        Heart_update(hearts, *num_lives);
+        Heart_update(hearts, 3, *num_lives);
         // Reset Peach's position or do other necessary actions
+
+        // Set the cooldown timer to prevent immediate subsequent collisions
+        *cooldown_timer = 60;
+    }
+}
+
+
+/* Update the cooldown timer */
+void Update_cooldown(int* cooldown_timer) {
+    if (*cooldown_timer > 0) {
+        (*cooldown_timer)--;
     }
 }
 
@@ -1009,6 +1026,7 @@ int main() {
         Heart_init(&hearts[i], 1 + i * 17, 5);
     }
     int num_lives = 3;
+    int cooldown_timer = 0;
 
     /* Initialize score number */
     struct Number number;
@@ -1052,7 +1070,8 @@ Coin_init(&coins[7], 450, 50);
             delay(300);
         }else{
             // Check collision between Peach and Goomba
-            Peach_collide(&peach, &goomba, hearts, &num_lives);
+            Update_cooldown(&cooldown_timer);
+            Peach_collide(&peach, &goomba, hearts, &num_lives, &cooldown_timer);
 
             Mario_update(&mario, &peach, 2*xscroll, yscroll); 
 
