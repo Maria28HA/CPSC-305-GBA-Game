@@ -812,7 +812,7 @@ void Goomba_init(struct Goomba* goomba) {
     goomba->x = 10; // Initial x-coordinate
     goomba->y = 121; // Initial y-coordinate
     goomba->direction = 1; // Initial direction (right)
-    goomba->frame = 744;
+    goomba->frame = 744;    //for goomba walking animation
     goomba->animation_delay = 8;
     goomba->counter = 0;
     goomba->move = 1;
@@ -872,7 +872,6 @@ void Peach_collide(struct Peach* peach, struct Goomba* goomba, struct Heart* hea
         *cooldown_timer = 60;
     }
 }
-
 
 /* Update the cooldown timer */
 void Update_cooldown(int* cooldown_timer) {
@@ -1112,7 +1111,11 @@ Coin_init(&coins[7], 215, 80);
                 peach_lose(&peach);
                 sprite_update_all();
                 delay(300);
-            } else {
+            } else { 
+                
+                 /* update the Goomba */
+                Goomba_update(&goomba, &peach, 2*xscroll, yscroll);
+
                 // Check collision between Peach and Goomba
                 Update_cooldown(&cooldown_timer);
                 Peach_collide(&peach, &goomba, hearts, &num_lives, &cooldown_timer);
