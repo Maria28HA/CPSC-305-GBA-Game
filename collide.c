@@ -949,12 +949,12 @@ void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xsc
 
             // Adjust negative x values
             if (coin_x < 0) {
-                coin_x += SCREEN_WIDTH;
+                coin_x += 300;
             }
 
             // Check for collision with Peach
-            if (peach->x < coin_x + 16 && peach->x + 32 > coin_x &&
-                peach->y < coin_y + 16 && peach->y + 32 > coin_y) {
+            if (peach->x < coin_x && peach->x + 32 > coin_x &&
+                peach->y < coin_y  && peach->y + 32 > coin_y) {
                 coin->collected = 1; // Set collected flag
                 // Move the coin off screen
                 coin->x = -16; // Move off screen
@@ -1072,13 +1072,13 @@ int main() {
     Coin_init(&coins[0], 5, 30); // Example: Coin at (50, 50)
 
     // Add more coins on top of different tiles
-    Coin_init(&coins[1], 30, 70);
+    Coin_init(&coins[1], 30, 80);
 Coin_init(&coins[2], 85, 60);
-Coin_init(&coins[3], 110, 60);
-Coin_init(&coins[4], 135, 60);
-Coin_init(&coins[5], 175, 35);
-Coin_init(&coins[6], 200, 35);
-Coin_init(&coins[7], 230, 20);
+Coin_init(&coins[3], 110, 40);
+Coin_init(&coins[4], 135, 100);
+Coin_init(&coins[5], 170, 35);
+Coin_init(&coins[6], 200, 80);
+Coin_init(&coins[7], 215, 80);
 
     /* create Mario */
     struct Mario mario;
@@ -1102,53 +1102,59 @@ Coin_init(&coins[7], 230, 20);
             sprite_update_all();
             delay(300);
         }else{
-            // Check collision between Peach and Goomba
-            Update_cooldown(&cooldown_timer);
-            Peach_collide(&peach, &goomba, hearts, &num_lives, &cooldown_timer);
+            if(num_lives == 0) {
+                wait_vblank();
+                peach_lose(&peach);
+                sprite_update_all();
+                delay(300);
+            } else {
+                // Check collision between Peach and Goomba
+                Update_cooldown(&cooldown_timer);
+                Peach_collide(&peach, &goomba, hearts, &num_lives, &cooldown_timer);
 
-            Mario_update(&mario, &peach, 2*xscroll, yscroll); 
+                Mario_update(&mario, &peach, 2*xscroll, yscroll); 
 
-            Toad_update(&toad, &peach, 2*xscroll, yscroll);        
+                Toad_update(&toad, &peach, 2*xscroll, yscroll);        
 
-            /* update the peach */
-            peach_update(&peach, &yoshi, 2*xscroll, yscroll);
+                /* update the peach */
+                peach_update(&peach, &yoshi, 2*xscroll, yscroll);
 
-            Yoshi_update(&yoshi, 2*xscroll, yscroll);
+                Yoshi_update(&yoshi, 2*xscroll, yscroll);
 
-            /* now the arrow keys move the peach */
-            if (button_pressed(BUTTON_RIGHT)) {
-                if (peach_right(&peach, &yoshi)) {
-                    xscroll++;
+                /* now the arrow keys move the peach */
+                if (button_pressed(BUTTON_RIGHT)) {
+                    if (peach_right(&peach, &yoshi)) {
+                        xscroll++;
+                    }
+                } else if (button_pressed(BUTTON_LEFT)) {
+                    if (peach_left(&peach, &yoshi)) {
+                        xscroll--;
+                    }
+                }else {
+                    peach_stop(&peach);
+                    yoshi_stop(&yoshi);
                 }
-            } else if (button_pressed(BUTTON_LEFT)) {
-                if (peach_left(&peach, &yoshi)) {
-                    xscroll--;
-                }
-            }else {
-                peach_stop(&peach);
-                yoshi_stop(&yoshi);
-            }
 
-            /* check for jumping */
-            if (button_pressed(BUTTON_A)) {
-                peach_jump(&peach);
-            }
+                /* check for jumping */
+                if (button_pressed(BUTTON_A)) {
+                    peach_jump(&peach);
+                }
             
-            /* wait for vblank before scrolling and moving sprites */
-            wait_vblank();
-        *bg0_x_scroll = xscroll;
-        *bg1_x_scroll = 2 * xscroll;
+                /* wait for vblank before scrolling and moving sprites */
+                 wait_vblank();
+                *bg0_x_scroll = xscroll;
+                *bg1_x_scroll = 2 * xscroll;
 
-        Coin_update(coins, 11, &peach, 2*xscroll, yscroll, &number);
+                Coin_update(coins, 11, &peach, 2*xscroll, yscroll, &number);
 
-        sprite_update_all();
-            /* delay some */
+                sprite_update_all();
+                /* delay some */
 
-            delay(300);
+                delay(300);
     
-            /* update the Goomba */
-            Goomba_update(&goomba, &peach);
-
+                /* update the Goomba */
+                Goomba_update(&goomba, &peach);
+            }
         }
    }
 }
