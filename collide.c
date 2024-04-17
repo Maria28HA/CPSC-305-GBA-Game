@@ -881,36 +881,45 @@ void Update_cooldown(int* cooldown_timer) {
     }
 }
 
-
 /* Structure for number */
 struct Number {
-    struct Sprite* sprite;
+    struct Sprite* ones_sprite;
+    struct Sprite* tens_sprite;
     int x, y;
-    int current_index; // Store the current index of the sprite
+    int current_ones_index; // Store the current index of the ones place sprite
+    int current_tens_index; // Store the current index of the tens place sprite
 };
 
-/* Initialize a number sprite */
-void Number_init(struct Number* number, int x, int y, int sprite_index) {
+/* Initialize number sprites */
+void Number_init(struct Number* number, int x, int y, int ones_sprite_index, int tens_sprite_index) {
     number->x = x;
     number->y = y;
-    number->sprite = sprite_init(x, y, SIZE_8_32, 0, 0, sprite_index, 2);
-    number->current_index = 864; // Initial index
+    number->ones_sprite = sprite_init(x, y, SIZE_8_32, 0, 0, ones_sprite_index, 2);
+    number->tens_sprite = sprite_init(x - 8, y, SIZE_8_32, 0, 0, tens_sprite_index, 2);
+    number->current_ones_index = ones_sprite_index; // Initial ones place index
+    number->current_tens_index = tens_sprite_index; // Initial tens place index
 }
-
 
 void sprite_set_tile_offset(struct Sprite* sprite, int tile_offset) {
     /* Update the sprite's attribute2 with the new tile offset */
     sprite->attribute2 = (sprite->attribute2 & 0xfc00) | (tile_offset & 0x03ff);
 }
 
-/* Function to update the number sprite based on the score */
+/* Function to update the number sprites based on the score */
 void Number_update(struct Number* number, int score) {
-    // Calculate the index based on the score
-    int index = 864 + (score * 8); // Assuming 'score' is a global variable
+    int ones_digit = score % 10;
+    int tens_digit = (score >= 10) ? 1 : 0; // Tens place is 1 if score is 10 or more
 
-    // Set the sprite's tile offset directly
-    sprite_set_tile_offset(number->sprite, index);
+    // Update ones place sprite
+    sprite_set_tile_offset(number->ones_sprite, 864 + (ones_digit * 8));
+    
+    // Update tens place sprite
+    sprite_set_tile_offset(number->tens_sprite, 864 + (tens_digit * 8));
+
+    // Show tens place sprite
+    sprite_position(number->tens_sprite, number->x - 8, number->y); // Move to the left of ones place
 }
+
 
 /* Structure for coin sprite */
 struct Coin {
@@ -1054,22 +1063,22 @@ int main() {
 
     /* Initialize score number */
     struct Number number;
-    Number_init(&number, 220, 5, 864);    
+    Number_init(&number, 220, 5, 864, 864);    
 
     int score = 0;
 
     /* Initialize coins */
     struct Coin coins[11];
-    Coin_init(&coins[0], 50, 50); // Example: Coin at (50, 50)
+    Coin_init(&coins[0], 5, 30); // Example: Coin at (50, 50)
 
     // Add more coins on top of different tiles
-    Coin_init(&coins[1], 150, 50);
-Coin_init(&coins[2], 200, 100);
-Coin_init(&coins[3], 250, 50);
-Coin_init(&coins[4], 300, 50);
-Coin_init(&coins[5], 350, 50);
-Coin_init(&coins[6], 400, 50);
-Coin_init(&coins[7], 450, 50);
+    Coin_init(&coins[1], 30, 70);
+Coin_init(&coins[2], 85, 60);
+Coin_init(&coins[3], 110, 60);
+Coin_init(&coins[4], 135, 60);
+Coin_init(&coins[5], 175, 35);
+Coin_init(&coins[6], 200, 35);
+Coin_init(&coins[7], 230, 20);
 
     /* create Mario */
     struct Mario mario;
