@@ -935,8 +935,13 @@ void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xsc
         struct Coin* coin = &coins[i];
         if (!coin->collected) {
             // Update the coin's position based on background scroll
-            int coin_x = coin->x - xscroll;
+            int coin_x = (coin->x - xscroll) % SCREEN_WIDTH;
             int coin_y = coin->y - yscroll;
+
+            // Adjust negative x values
+            if (coin_x < 0) {
+                coin_x += SCREEN_WIDTH;
+            }
 
             // Check for collision with Peach
             if (peach->x < coin_x + 16 && peach->x + 32 > coin_x &&
@@ -959,6 +964,7 @@ void Coin_update(struct Coin* coins, int num_coins, struct Peach* peach, int xsc
         }
     }
 }
+
 
 // Function to get the current background scroll X position
 int get_background_scroll_x() {
