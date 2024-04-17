@@ -989,7 +989,7 @@ int get_background_scroll_y() {
 void GoombaMove(int* x, int* direction); // Assembly function declaration
 
 /* Update the Goomba's position and direction */
-void Goomba_update(struct Goomba* goomba, struct Peach* peach) {
+void Goomba_update(struct Goomba* goomba, struct Peach* peach, int xscroll, int yscroll) {
 
     GoombaMove(&goomba->x, &goomba->direction);
 
@@ -1025,6 +1025,11 @@ void Goomba_update(struct Goomba* goomba, struct Peach* peach) {
         }
     }
 
+    if (peach->y > 175){
+        yscroll = 220;
+        xscroll *= -1;
+    }
+    sprite_move(goomba->sprite, xscroll, yscroll);
 }
 
 /* the main function */
@@ -1153,7 +1158,7 @@ Coin_init(&coins[7], 215, 80);
                 delay(300);
     
                 /* update the Goomba */
-                Goomba_update(&goomba, &peach);
+                Goomba_update(&goomba, &peach, 2*xscroll, yscroll);
             }
         }
    }

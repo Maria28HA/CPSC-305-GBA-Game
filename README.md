@@ -25,6 +25,6 @@ Madison To Do
     - Add cooldown for collide with Goomba
 
 Maria To Do
-    - Animate the Goomba
+    - Animate the Goomba (DONE)
     - Make sure he doesn't go underground (DONE)
-    - Add an underground Goomba (if time) 
+    - Add an underground Goomba (if time)   (DONE) 
