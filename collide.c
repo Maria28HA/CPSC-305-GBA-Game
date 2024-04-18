@@ -655,12 +655,14 @@ void peach_update(struct Peach* peach, struct Yoshi* yoshi, int xscroll, int ysc
         /* move him down one because there is a one pixel gap in the image */
         peach->y++;
        
+        /* The wall barrier for the unerground portion based on certain tile blocks.*/
         if (left == 246){
             peach->x += 1;
         }else if (right == 247 || right == 259){
             peach->x -= 1;
         }
  
+        /* If Peach is on one of these tiles, she is on the pipe to go to the underground.*/
         if ((tile == 82 || tile == 83)){
             peach->frame = 160;
             sprite_set_offset(peach->sprite, peach->frame);
@@ -676,13 +678,14 @@ void peach_update(struct Peach* peach, struct Yoshi* yoshi, int xscroll, int ysc
             peach->stopVal = 0;
         }
 
+        /* If Peach is on one of these tiles, she has won the game! */
         if (tile == 178 || tile == 179){
             peach->won = 1;
             peach->move = 0;
         }
 
     } else {
-        /* he is falling now */
+        /* she is falling now */
         peach->falling = 1;
     }
 
@@ -699,10 +702,13 @@ void peach_update(struct Peach* peach, struct Yoshi* yoshi, int xscroll, int ysc
         }
     }
 
+    /* Top of the screen barrier for the above ground portion */
     if (peach->y < -60){
         peach->y = -60;
         peach->falling = 1;
     }
+
+    /* Top of the screen barrier for the underground portion. */
     if (peach->y > 150){
         if (peach->y < 200){
             peach->y = 200;
@@ -796,6 +802,7 @@ void Mario_init(struct Mario* mario){
     mario->sprite = sprite_init(mario->x, mario->y, SIZE_32_32, 0, 0, 352, 3);
 }
 
+/* Update Mario. Scroll him against the regular scroll to keep him in place. */
 void Mario_update(struct Mario* mario, struct Peach* peach, int xscroll, int yscroll){
     sprite_position(mario->sprite, mario->x, mario->y);
     if (peach->y > 175){
@@ -805,6 +812,7 @@ void Mario_update(struct Mario* mario, struct Peach* peach, int xscroll, int ysc
         sprite_move(mario->sprite, xscroll, yscroll);
 }
 
+/* Set the correct index in the sprite palette for Mario's win animation */
 void mario_win(struct Mario* mario){
     sprite_set_offset(mario->sprite, 480);
 }
@@ -822,6 +830,7 @@ void Toad_init(struct Toad* toad){
     toad->sprite = sprite_init(toad->x, toad->y, SIZE_32_64, 0, 0, 672, 3);
 }
 
+/* update Toad. Scroll him against the regular scroll to keep him in place. */
 void Toad_update(struct Toad* toad, struct Peach* peach, int xscroll, int yscroll){
     sprite_position(toad->sprite, toad->x, toad->y);
     if (peach->y > 175){
@@ -831,6 +840,7 @@ void Toad_update(struct Toad* toad, struct Peach* peach, int xscroll, int yscrol
     sprite_move(toad->sprite, xscroll, yscroll);
 }
 
+/* Set the correct index in the sprite palette for Toad's win animation */
 void toad_win(struct Toad* toad){
     sprite_set_offset(toad->sprite, 608);
 }
@@ -1146,6 +1156,7 @@ int main() {
     /* loop forever */
     while (1) {
         if(peach.won){
+            //If the game has been won, draw all the characters in their win animations forever.
             wait_vblank();
             peach_win(&peach);
             yoshi_win(&yoshi);
@@ -1176,13 +1187,16 @@ int main() {
                 Update_cooldown(&cooldown_timer);
                 Peach_collide(&peach, &goomba, hearts, &num_lives, &cooldown_timer);
 
+                /* update Mario */
                 Mario_update(&mario, &peach, 2*xscroll, yscroll); 
 
+                /* update Toad */
                 Toad_update(&toad, &peach, 2*xscroll, yscroll);        
 
-                /* update the peach */
+                /* update Peach */
                 peach_update(&peach, &yoshi, 2*xscroll, yscroll);
 
+                /* update Yoshi */
                 Yoshi_update(&yoshi, 2*xscroll, yscroll);
 
                 /* now the arrow keys move the peach */
