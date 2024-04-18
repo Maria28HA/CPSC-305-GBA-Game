@@ -1077,12 +1077,12 @@ int main() {
 
     // Add more coins on top of different tiles
     Coin_init(&coins[1], 30, 80);
-Coin_init(&coins[2], 85, 60);
-Coin_init(&coins[3], 110, 40);
-Coin_init(&coins[4], 135, 100);
-Coin_init(&coins[5], 170, 35);
-Coin_init(&coins[6], 200, 80);
-Coin_init(&coins[7], 215, 80);
+    Coin_init(&coins[2], 85, 60);
+    Coin_init(&coins[3], 110, 40);
+    Coin_init(&coins[4], 135, 100);
+    Coin_init(&coins[5], 170, 35);
+    Coin_init(&coins[6], 200, 80);
+    Coin_init(&coins[7], 215, 80);
 
     /* create Mario */
     struct Mario mario;
@@ -1160,8 +1160,6 @@ Coin_init(&coins[7], 215, 80);
 
                 delay(300);
     
-                /* update the Goomba */
-                Goomba_update(&goomba, &peach, 2*xscroll, yscroll);
             }
         }
    }
