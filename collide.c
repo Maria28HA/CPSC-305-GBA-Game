@@ -3,7 +3,7 @@
  * program which demonstrates sprites colliding with tiles
  */
  
-#include <stdio.h>
+//#include <stdio.h>
 
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 160
@@ -173,47 +173,47 @@ void setup_background() {
         (1 << 13) |       /* wrapping flag */
         (3 << 14);        /* bg size, 0 is 256x256 */
     
-    *bg2_control = 0 |    /* priority, 0 is highest, 3 is lowest */
-        (0 << 2)  |       /* the char block the image data is stored in */
-        (0 << 6)  |       /* the mosaic flag */
-        (1 << 7)  |       /* color mode, 0 is 16 colors, 1 is 256 colors */
-        (26 << 8) |       /* the screen block the tile data is stored in */
-        (1 << 13) |       /* wrapping flag */
-        (0 << 14);        /* bg size, 0 is 256x256 */
+   // *bg2_control = 0 |    /* priority, 0 is highest, 3 is lowest */
+     //   (0 << 2)  |       /* the char block the image data is stored in */
+   //     (0 << 6)  |       /* the mosaic flag */
+    //    (1 << 7)  |       /* color mode, 0 is 16 colors, 1 is 256 colors */
+  //      (26 << 8) |       /* the screen block the tile data is stored in */
+   //     (1 << 13) |       /* wrapping flag */
+   //     (0 << 14);        /* bg size, 0 is 256x256 */
 
 
     /* load the tile data into screen block 16 */
     memcpy16_dma((unsigned short*) screen_block(16), (unsigned short*) background, background_width * background_height);
     memcpy16_dma((unsigned short*) screen_block(24), (unsigned short*) blocks, blocks_width * blocks_height);
     
-    volatile unsigned short* text = screen_block(26);
-    for (int i = 0; i < 32 * 32; i++) {
-        text[i] = 968;
-    }
-}
+    //volatile unsigned short* text = screen_block(26);
+    //for (int i = 0; i < 32 * 32; i++) {
+      //  text[i] = 968;
+    //}
+//}
 
 
 
 /* function to set text on the screen at a given location */
-void set_text(char* str, int row, int col) {
+//void set_text(char* str, int row, int col) {
     /* find the index in the texmap to draw to */
-    int index = row * 64 + col;
+  //  int index = row * 64 + col;
 
     /* the first 32 characters are missing from the map (controls etc.) */
-    int missing = 32;
+ //   int missing = 32;
 
     /* pointer to text map */
-    volatile unsigned short* ptr = screen_block(26);
+//    volatile unsigned short* ptr = screen_block(26);
 
     /* for each character */
-    while (*str) {
+//    while (*str) {
         /* place this character in the map */
-        ptr[index] = *str - missing + 264;
+ //       ptr[index] = *str - missing + 264;
 
         /* move onto the next character */
-        index++;
-        str++;
-    }
+ //       index++;
+   //     str++;
+  //  }
 }
 
 /* just kill time */
@@ -897,8 +897,8 @@ void Peach_collide(struct Peach* peach, struct Goomba* goomba, struct Heart* hea
     }
 
     // Check collision between Peach and Goomba
-    if (peach->x < goomba->x + 10 &&
-        peach->x + 10 > goomba->x &&
+    if (peach->x < goomba->x + 16 &&
+        peach->x + 32 > goomba->x &&
         peach->y < goomba->y + 32 &&
         peach->y + 64 > goomba->y) {
         // Reduce Peach's lives
@@ -1044,12 +1044,10 @@ void Goomba_update(struct Goomba* goomba, struct Peach* peach, int xscroll, int 
 
     // Update goomba's y-coordinate based on peach going underground
     if(peach->y > 175){
-        goomba->y = 94;
-        yscroll = 94;
+        goomba->y = 381;
     }
    
     // Update Goomba sprite position
-    sprite_position(goomba->sprite, goomba->x, goomba->y);
 
     //Hopefully flip the sprite if walking left
     if (goomba->direction == -1) {
@@ -1076,14 +1074,15 @@ void Goomba_update(struct Goomba* goomba, struct Peach* peach, int xscroll, int 
         xscroll *= -1;
     }*/
 
+    sprite_position(goomba->sprite, goomba->x, goomba->y);
     //adjust the scrolling for goomba
-    sprite_move(goomba->sprite, xscroll, yscroll);
+    //sprite_move(goomba->sprite, xscroll, yscroll);
 }
 
 /* the main function */
 int main() {
     /* we set the mode to mode 0 with bg0 on */
-    *display_control = MODE0 | BG0_ENABLE |BG1_ENABLE | BG2_ENABLE | SPRITE_ENABLE | SPRITE_MAP_1D;
+    *display_control = MODE0 | BG0_ENABLE |BG1_ENABLE | /*BG2_ENABLE |*/ SPRITE_ENABLE | SPRITE_MAP_1D;
 
     /* setup the background 0 */
     setup_background();
@@ -1163,12 +1162,12 @@ int main() {
             } else { 
                
                 // debugging
-                char msg[32];
-                sprintf(msg, "Goomba x = %d", goomba.x);
-                set_text(msg, 0, 0);
+               // char msg[32];
+               // sprintf(msg, "Goomba x = %d", goomba.x);
+               // set_text(msg, 0, 0);
 
-                sprintf(msg, "Peach x = %d", peach.x);
-                set_text(msg, 1, 0);
+               // sprintf(msg, "Peach x = %d", peach.x);
+               // set_text(msg, 1, 0);
                 
                  /* update the Goomba */
                 Goomba_update(&goomba, &peach, 2*xscroll, yscroll);
