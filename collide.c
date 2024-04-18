@@ -197,7 +197,7 @@ void setup_background() {
 /* function to set text on the screen at a given location */
 void set_text(char* str, int row, int col) {
     /* find the index in the texmap to draw to */
-    int index = row * 32 + col;
+    int index = row * 64 + col;
 
     /* the first 32 characters are missing from the map (controls etc.) */
     int missing = 32;
