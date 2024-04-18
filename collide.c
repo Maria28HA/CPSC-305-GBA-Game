@@ -2,6 +2,8 @@
  * collide.c
  * program which demonstrates sprites colliding with tiles
  */
+ 
+#include <stdio.h>
 
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 160
@@ -170,11 +172,48 @@ void setup_background() {
         (24 << 8) |       /* the screen block the tile data is stored in */
         (1 << 13) |       /* wrapping flag */
         (3 << 14);        /* bg size, 0 is 256x256 */
+    
+    *bg2_control = 0 |    /* priority, 0 is highest, 3 is lowest */
+        (0 << 2)  |       /* the char block the image data is stored in */
+        (0 << 6)  |       /* the mosaic flag */
+        (1 << 7)  |       /* color mode, 0 is 16 colors, 1 is 256 colors */
+        (26 << 8) |       /* the screen block the tile data is stored in */
+        (1 << 13) |       /* wrapping flag */
+        (0 << 14);        /* bg size, 0 is 256x256 */
 
 
     /* load the tile data into screen block 16 */
     memcpy16_dma((unsigned short*) screen_block(16), (unsigned short*) background, background_width * background_height);
     memcpy16_dma((unsigned short*) screen_block(24), (unsigned short*) blocks, blocks_width * blocks_height);
+    
+    volatile unsigned short* text = screen_block(26);
+    for (int i = 0; i < 32 * 32; i++) {
+        text[i] = 968;
+    }
+}
+
+
+
+/* function to set text on the screen at a given location */
+void set_text(char* str, int row, int col) {
+    /* find the index in the texmap to draw to */
+    int index = row * 32 + col;
+
+    /* the first 32 characters are missing from the map (controls etc.) */
+    int missing = 32;
+
+    /* pointer to text map */
+    volatile unsigned short* ptr = screen_block(26);
+
+    /* for each character */
+    while (*str) {
+        /* place this character in the map */
+        ptr[index] = *str - missing + 264;
+
+        /* move onto the next character */
+        index++;
+        str++;
+    }
 }
 
 /* just kill time */
@@ -989,18 +1028,26 @@ void GoombaMove(int* x, int* direction); // Assembly function declaration
 
 /* Update the Goomba's position and direction */
 void Goomba_update(struct Goomba* goomba, struct Peach* peach, int xscroll, int yscroll) {
+    
+    /*calculate diff between peach's y-coordinate and center of screen
+    int yscroll_adjustment = peach->y - (SCREEN_HEIGHT/2);
+    //Adjust yscrolling for peach
+    yscroll += yscroll_adjustment;*/
 
+    //calls the assembly code to move the goomba
     GoombaMove(&goomba->x, &goomba->direction);
 
     // Check boundaries (adjust as needed)
-    if (goomba->x <= 0 || goomba->x >= 100) {
-        goomba->direction *= -1; // Reverse direction if Goomba reaches screen edges
+    if (goomba->x > SCREEN_WIDTH) {
+        goomba->x = -32; // Reverse direction if Goomba reaches screen edges
     }
 
-    if(peach->y > 175){
-        goomba->y = 160;   
-    }
-
+    // Update goomba's y-coordinate based on peach going underground
+    /*if(peach->y > 175){
+        goomba->y = 160;
+        yscroll = 94;
+    }*/
+   
     // Update Goomba sprite position
     sprite_position(goomba->sprite, goomba->x, goomba->y);
 
@@ -1024,17 +1071,19 @@ void Goomba_update(struct Goomba* goomba, struct Peach* peach, int xscroll, int 
         }
     }
 
-    if (peach->y > 175){
+    /*if (peach->y > 175){
         yscroll = 220;
         xscroll *= -1;
-    }
+    }*/
+
+    //adjust the scrolling for goomba
     sprite_move(goomba->sprite, xscroll, yscroll);
 }
 
 /* the main function */
 int main() {
     /* we set the mode to mode 0 with bg0 on */
-    *display_control = MODE0 | BG0_ENABLE |BG1_ENABLE | SPRITE_ENABLE | SPRITE_MAP_1D;
+    *display_control = MODE0 | BG0_ENABLE |BG1_ENABLE | BG2_ENABLE | SPRITE_ENABLE | SPRITE_MAP_1D;
 
     /* setup the background 0 */
     setup_background();
@@ -1112,6 +1161,14 @@ int main() {
                 sprite_update_all();
                 delay(300);
             } else { 
+               
+                // debugging
+                char msg[32];
+                sprintf(msg, "Goomba x = %d", goomba.x);
+                set_text(msg, 0, 0);
+
+                sprintf(msg, "Peach x = %d", peach.x);
+                set_text(msg, 1, 0);
                 
                  /* update the Goomba */
                 Goomba_update(&goomba, &peach, 2*xscroll, yscroll);
