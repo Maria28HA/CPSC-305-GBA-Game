@@ -897,8 +897,8 @@ void Peach_collide(struct Peach* peach, struct Goomba* goomba, struct Heart* hea
     }
 
     // Check collision between Peach and Goomba
-    if (peach->x < goomba->x + 32 &&
-        peach->x + 32 > goomba->x &&
+    if (peach->x < goomba->x + 10 &&
+        peach->x + 10 > goomba->x &&
         peach->y < goomba->y + 32 &&
         peach->y + 64 > goomba->y) {
         // Reduce Peach's lives
@@ -1029,11 +1029,11 @@ void GoombaMove(int* x, int* direction); // Assembly function declaration
 /* Update the Goomba's position and direction */
 void Goomba_update(struct Goomba* goomba, struct Peach* peach, int xscroll, int yscroll) {
     
-    /*calculate diff between peach's y-coordinate and center of screen
-    int yscroll_adjustment = peach->y - (SCREEN_HEIGHT/2);
+    //calculate diff between peach's y-coordinate and center of screen
+/*    int yscroll_adjustment = peach->y - (SCREEN_HEIGHT/2);
     //Adjust yscrolling for peach
-    yscroll += yscroll_adjustment;*/
-
+    yscroll += yscroll_adjustment;
+*/
     //calls the assembly code to move the goomba
     GoombaMove(&goomba->x, &goomba->direction);
 
@@ -1043,10 +1043,10 @@ void Goomba_update(struct Goomba* goomba, struct Peach* peach, int xscroll, int 
     }
 
     // Update goomba's y-coordinate based on peach going underground
-    /*if(peach->y > 175){
-        goomba->y = 160;
+    if(peach->y > 175){
+        goomba->y = 94;
         yscroll = 94;
-    }*/
+    }
    
     // Update Goomba sprite position
     sprite_position(goomba->sprite, goomba->x, goomba->y);
